@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: flights
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: flights
+  template:
+    metadata:
+      labels:
+        app: flights
+    spec:
+      containers:
+      - name: flights
+        image: flights:latest
+        imagePullPolicy: Never
+        ports:
+        - containerPort: 5001
+        env:
+        # OpenTelemetry environment variables
+        - name: OTEL_EXPORTER_OTLP_ENDPOINT
+          value: "http://10.225.255.227:4317"
+        - name: OTEL_EXPORTER_OTLP_PROTOCOL
+          value: "grpc"
+        - name: OTEL_RESOURCE_ATTRIBUTES
+          value: "service.name=flights-service,service.version=1.0.0,service.namespace=pov-sim"
+        # Pyroscope environment variables
+        - name: PYROSCOPE_SERVER_ADDRESS
+          value: "https://profiles-prod-008.grafana.net"
+        - name: PYROSCOPE_APPLICATION_NAME
+          value: "flights-service"
+        - name: PYROSCOPE_BASIC_AUTH_USER
+          value: "1093656"
+        - name: PYROSCOPE_BASIC_AUTH_PASSWORD
+          value: "glc_eyJvIjoiMTI2NzQ0MCIsIm4iOiJzdGFjay0xMDkzNjU2LWhwLXdyaXRlLXNjb2FkeS1wcm9maWxlcyIsImsiOiI3aFA0NkpWNnRiTzBINUEyaGw1cDVVRjEiLCJtIjp7InIiOiJwcm9kLXVzLXdlc3QtMCJ9fQ=="
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: flights
+  namespace: default
+spec:
+  selector:
+    app: flights
+  ports:
+  - port: 5001
+    targetPort: 5001
+  type: ClusterIP

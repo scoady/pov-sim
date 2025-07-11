@@ -19,6 +19,8 @@ dependencies {
 	// end::actuator[]
 	implementation 'org.springframework.boot:spring-boot-starter-web'
 	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.5.0'
+	// Pyroscope Java Agent
+	implementation 'io.pyroscope:agent:2.1.2'
 	// tag::tests[]
 	testImplementation('org.springframework.boot:spring-boot-starter-test')
 	// end::tests[]

@@ -1,0 +1,72 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: airlines
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: airlines
+  template:
+    metadata:
+      labels:
+        app: airlines
+    spec:
+      containers:
+      - name: airlines
+        image: airlines:latest
+        imagePullPolicy: Never
+        ports:
+        - containerPort: 8080
+        env:
+        - name: OTEL_RESOURCE_ATTRIBUTES
+          value: "service.name=airlines,service.namespace=pov-sim,deployment.environment=production"
+        - name: OTEL_EXPORTER_OTLP_ENDPOINT
+          value: "http://10.225.255.227:4317"
+        - name: OTEL_EXPORTER_OTLP_PROTOCOL
+          value: "grpc"
+        - name: GRAFANA_OTEL_APPLICATION_OBSERVABILITY_METRICS
+          value: "true"
+        - name: MANAGEMENT_METRICS_BINDERS_PROCESSOR_ENABLED
+          value: "false"
+        - name: MANAGEMENT_METRICS_BINDERS_UPTIME_ENABLED
+          value: "false"
+        - name: MANAGEMENT_METRICS_BINDERS_SYSTEM_ENABLED
+          value: "false"
+        - name: MANAGEMENT_METRICS_BINDERS_JVM_ENABLED
+          value: "false"
+        - name: CORS_ALLOW_ALL_ORIGINS
+          value: "true"
+        - name: OTEL_JAVAAGENT_DEBUG
+          value: "false"
+        - name: OTEL_EXPORTER_OTLP_TIMEOUT
+          value: "30000"
+        - name: PYROSCOPE_PROFILING_INTERVAL
+          value: 10ms
+        - name: PYROSCOPE_PROFILER_ALLOC_CONFIG
+          value: 4k
+        - name: PYROSCOPE_UPLOAD_INTERVAL
+          value: 6s
+        - name: PYROSCOPE_SAMPLING_DURATION
+          value: 2s
+        - name: PYROSCOPE_SAMPLING_EVENT_ORDER
+          value: itimer,alloc
+        - name: PYROSCOPE_APPLICATION_NAME
+          value: airlines-service
+        - name: PYROSCOPE_LOG_LEVEL
+          value: debug
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: airlines
+  namespace: default
+spec:
+  selector:
+    app: airlines
+  ports:
+  - port: 8080
+    targetPort: 8080
+  type: ClusterIP
