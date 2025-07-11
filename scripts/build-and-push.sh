@@ -5,7 +5,7 @@
 # Example: ./build-and-push.sh flights
 
 APP_NAME=$1
-VALID_APPS=("airlines" "flights" "frontend")
+VALID_APPS=("airlines" "flights" "frontend" "proxy")
 
 # Function to display usage
 usage() {

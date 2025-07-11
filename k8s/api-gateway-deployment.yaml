@@ -1,21 +1,23 @@
+## API gateway to get rid of CORS nonsense in between frontend and backend services
+
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: api-gateway
+  name: proxy
   namespace: default
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: api-gateway
+      app: proxy
   template:
     metadata:
       labels:
-        app: api-gateway
+        app: proxy
     spec:
       containers:
-      - name: api-gateway
-        image: api-gateway:latest
+      - name: proxy
+        image: proxy:latest
         imagePullPolicy: Never
         ports:
         - containerPort: 80
@@ -23,11 +25,11 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: api-gateway
+  name: proxy
   namespace: default
 spec:
   selector:
-    app: api-gateway
+    app: proxy
   ports:
   - port: 80
     targetPort: 80

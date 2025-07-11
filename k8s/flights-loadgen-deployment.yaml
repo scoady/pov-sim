@@ -1,0 +1,58 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: flights-loadgen
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: flights-loadgen
+  template:
+    metadata:
+      labels:
+        app: flights-loadgen
+    spec:
+      containers:
+      - name: loadgen
+        image: curlimages/curl:latest
+        command: ["/bin/sh"]
+        args:
+          - -c
+          - |
+            echo "Starting flights loadgen..."
+            while true; do
+              # Basic GET endpoints
+              echo "Testing basic endpoints..."
+              curl -s http://flights:5001/ || echo "Failed /"
+              curl -s http://flights:5001/health || echo "Failed /health"
+              
+              # GET flights with different airlines
+              echo "Testing flights endpoints..."
+              curl -s http://flights:5001/flights/AA || echo "Failed /flights/AA"
+              curl -s http://flights:5001/flights/UA || echo "Failed /flights/UA" 
+              curl -s http://flights:5001/flights/DL || echo "Failed /flights/DL"
+              
+              # POST flight bookings
+              echo "Testing flight booking endpoints..."
+              curl -s -X POST "http://flights:5001/flight?passenger_name=John%20Doe&flight_num=101" || echo "Failed POST flight"
+              curl -s -X POST "http://flights:5001/flight?passenger_name=Jane%20Doe&flight_num=202" || echo "Failed POST flight"
+              
+              # Occasionally trigger errors (10% of the time)
+              if [ $((RANDOM % 10)) -eq 0 ]; then
+                echo "Triggering error..."
+                curl -s "http://flights:5001/flights/AA?raise=500" || echo "Expected error"
+                curl -s -X POST "http://flights:5001/flight?passenger_name=John%20Doe&flight_num=101&raise=500" || echo "Expected error"
+              fi
+              
+              echo "Completed cycle, sleeping 1 second..."
+              sleep 1
+            done
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "50m"
+          limits:
+            memory: "128Mi" 
+            cpu: "100m"
+      restartPolicy: Always

@@ -23,24 +23,25 @@ public class Application {
 		String pyroscopeServerAddress = System.getenv().getOrDefault("PYROSCOPE_SERVER_ADDRESS", "https://profiles-prod-008.grafana.net");
 		String applicationName = System.getenv().getOrDefault("PYROSCOPE_APPLICATION_NAME", "airlines-service");
 		String basicAuthUser = System.getenv().getOrDefault("PYROSCOPE_BASIC_AUTH_USER", "1093656");
-		String basicAuthPassword = System.getenv().getOrDefault("PYROSCOPE_BASIC_AUTH_PASSWORD", "glc_eyJvIjoiMTI2NzQ0MCIsIm4iOiJzdGFjay0xMDkzNjU2LWhwLXdyaXRlLXNjb2FkeS1wcm9maWxlcyIsImsiOiI3aHA0NkpWNnRiTzBINUEyaGw1cDVVRjEiLCJtIjp7InIiOiJwcm9kLXVzLXdlc3QtMCJ9fQ==");
+		String basicAuthPassword = System.getenv("PYROSCOPE_BASIC_AUTH_PASSWORD");
 		
-		// Set system properties for environment variables that the agent might check
-//		System.setProperty("PYROSCOPE_APPLICATION_NAME", applicationName);
-		System.setProperty("PYROSCOPE_SERVER_ADDRESS", pyroscopeServerAddress);
-		System.setProperty("PYROSCOPE_AUTH_TOKEN", basicAuthUser + ":" + basicAuthPassword);
+		// Set system properties for environment variables
+		// not super necessary to do it this way but i find it confusing to have 3 different options available to configure the client
+		// and wanted to document another valid way to configure the pyroscope client 
+		System.setProperty("pyroscope.application.name", applicationName);
+		System.setProperty("pyroscope.server.address", pyroscopeServerAddress);
+		System.setProperty("pyroscope.labels", "service_name=airlines-service");
+		Config config = new Config.Builder()
+			.setApplicationName(applicationName)
+			.setProfilingEvent(EventType.ITIMER)
+			//.setProfilingEvent(EventType.ALLOC)
+			.setFormat(Format.JFR)
+			.setServerAddress(pyroscopeServerAddress)
+			.setBasicAuthUser(basicAuthUser)
+			.setBasicAuthPassword(basicAuthPassword)
+			.build();
 		
-		PyroscopeAgent.start(
-			new Config.Builder()
-				.setApplicationName(applicationName)
-				.setProfilingEvent(EventType.ITIMER)
-				.setProfilingEvent(EventType.ALLOC) 
-				.setFormat(Format.JFR)
-				.setServerAddress(pyroscopeServerAddress)
-				.setBasicAuthUser(basicAuthUser)
-				.setBasicAuthPassword(basicAuthPassword)
-				.build()
-		);
+		PyroscopeAgent.start(config);
 		
 		System.out.println("Pyroscope profiling started for: " + applicationName);
 		System.out.println("Pyroscope server address: " + pyroscopeServerAddress);

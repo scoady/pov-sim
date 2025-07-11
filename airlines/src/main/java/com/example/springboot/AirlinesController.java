@@ -5,17 +5,21 @@ import io.swagger.v3.oas.annotations.Parameter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.beans.factory.annotation.Autowired;
 
 @RestController
 public class AirlinesController {
 	private static String[] airlines = { "AA", "DL", "UA" };
+	
+	@Autowired
+	private MetricsExporter metricsExporter;
 	
 	/**
 	 * Dummy method to allocate 1MB object for memory profiling
 	 */
 	private void allocateDummyMemory() {
 		// Allocate 1MB byte array to trigger memory allocation profiling
-		byte[] dummyAllocation = new byte[1024 * 1024]; // 1MB
+		byte[] dummyAllocation = new byte[1024 * 1]; // 1MB
 		
 		// Do something minimal with the array to prevent compiler optimization
 		dummyAllocation[0] = 1;
@@ -28,13 +32,15 @@ public class AirlinesController {
 	@Operation(summary = "Index", description = "No-op hello world")
 	@GetMapping("/")
 	public String index() {
-		allocateDummyMemory();
+		metricsExporter.incrementRequests("/");
+		System.out.println("Incremented airlines_requests_total counter for endpoint: /");
 		return "Greetings from Spring Boot!";
 	}
 
 	@Operation(summary = "Health check", description = "Performs a simple health check")
 	@GetMapping("/health")
 	public String health() {
+		metricsExporter.incrementRequests("/health");
 		return "Health check passed!";
 	}
 
@@ -43,6 +49,7 @@ public class AirlinesController {
 	public String getUserById(
 			@Parameter(description = "Optional flag - set raise to true to raise an exception") 
 			@RequestParam(value = "raise", required = false, defaultValue = "false") boolean raise) {
+		metricsExporter.incrementRequests("/airlines");
 		allocateDummyMemory();
 		if (raise) {
 			throw new RuntimeException("Exception raised");

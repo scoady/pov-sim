@@ -1,3 +1,6 @@
 node_modules
 .env
 .gradle
+k8s/secrets/
+k8s/secrets/*
+.claude

@@ -1,0 +1,50 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: airlines-loadgen
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: airlines-loadgen
+  template:
+    metadata:
+      labels:
+        app: airlines-loadgen
+    spec:
+      containers:
+      - name: loadgen
+        image: curlimages/curl:latest
+        command: ["/bin/sh"]
+        args:
+          - -c
+          - |
+            echo "Starting airlines loadgen..."
+            while true; do
+              # Basic GET endpoints
+              echo "Testing basic endpoints..."
+              curl -s http://airlines:8080/ || echo "Failed /"
+              curl -s http://airlines:8080/health || echo "Failed /health"
+              
+              # GET airlines endpoint
+              echo "Testing airlines endpoint..."
+              curl -s http://airlines:8080/airlines || echo "Failed /airlines"
+              
+              # Occasionally trigger errors (10% of the time)
+              if [ $((RANDOM % 10)) -eq 0 ]; then
+                echo "Triggering error..."
+                curl -s "http://airlines:8080/airlines?raise=true" || echo "Expected error"
+              fi
+              
+              echo "Completed cycle, sleeping 1 second..."
+              sleep 1
+            done
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "50m"
+          limits:
+            memory: "128Mi"
+            cpu: "100m"
+      restartPolicy: Always

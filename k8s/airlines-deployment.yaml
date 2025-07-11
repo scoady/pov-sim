@@ -21,12 +21,24 @@ spec:
         - containerPort: 8080
         env:
         - name: OTEL_RESOURCE_ATTRIBUTES
-          value: "service.name=airlines,service.namespace=pov-sim,deployment.environment=production"
+          value: "service.name=airlines-service,service.version=1.0.0,service.namespace=pov-sim,deployment.environment=production"
         - name: OTEL_EXPORTER_OTLP_ENDPOINT
-          value: "http://10.225.255.227:4317"
+          value: "http://10.96.182.73:4317/"
         - name: OTEL_EXPORTER_OTLP_PROTOCOL
           value: "grpc"
         - name: GRAFANA_OTEL_APPLICATION_OBSERVABILITY_METRICS
+          value: "true"
+        - name: OTEL_METRICS_EXPORTER
+          value: "otlp"
+        - name: OTEL_EXPORTER_OTLP_METRICS_ENDPOINT
+          value: "http://10.96.182.73:4317/"
+        - name: OTEL_INSTRUMENTATION_METRICS_ENABLED
+          value: "true"
+        - name: OTEL_INSTRUMENTATION_HTTP_METRICS_ENABLED
+          value: "true"
+        - name: OTEL_METRIC_EXPORT_INTERVAL
+          value: "10000"
+        - name: OTEL_JAVAAGENT_DEBUG
           value: "true"
         - name: MANAGEMENT_METRICS_BINDERS_PROCESSOR_ENABLED
           value: "false"
@@ -38,24 +50,36 @@ spec:
           value: "false"
         - name: CORS_ALLOW_ALL_ORIGINS
           value: "true"
-        - name: OTEL_JAVAAGENT_DEBUG
-          value: "false"
         - name: OTEL_EXPORTER_OTLP_TIMEOUT
           value: "30000"
+        - name: PYROSCOPE_SERVER_ADDRESS
+          value: "https://profiles-prod-008.grafana.net"
         - name: PYROSCOPE_PROFILING_INTERVAL
           value: 10ms
         - name: PYROSCOPE_PROFILER_ALLOC_CONFIG
           value: 4k
         - name: PYROSCOPE_UPLOAD_INTERVAL
-          value: 6s
+          value: 10s
         - name: PYROSCOPE_SAMPLING_DURATION
-          value: 2s
+          value: 5s
         - name: PYROSCOPE_SAMPLING_EVENT_ORDER
-          value: itimer,alloc
+          value: itimer
         - name: PYROSCOPE_APPLICATION_NAME
           value: airlines-service
         - name: PYROSCOPE_LOG_LEVEL
           value: debug
+        - name: PYROSCOPE_BASIC_AUTH_USER
+          valueFrom:
+            secretKeyRef:
+              name: grafana-secrets
+              key: PYROSCOPE_BASIC_AUTH_USER
+        - name: PYROSCOPE_BASIC_AUTH_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: grafana-secrets
+              key: PYROSCOPE_BASIC_AUTH_PASSWORD
+        - name: PYROSCOPE_LABELS
+          value: "service_name=airlines-service"
 
 ---
 apiVersion: v1

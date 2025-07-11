@@ -19,11 +19,6 @@ spec:
         imagePullPolicy: Never
         ports:
         - containerPort: 3000
-        env:
-        - name: REACT_APP_AIRLINES_API_URL
-          value: "http://172.18.0.2/api/airlines/airlines"
-        - name: REACT_APP_FLIGHTS_API_URL
-          value: "http://172.18.0.2/api/flights/flights"
 ---
 apiVersion: v1
 kind: Service

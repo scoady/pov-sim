@@ -15,6 +15,7 @@ from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import BatchSpanProcessor
 from opentelemetry.sdk.metrics import MeterProvider
 from opentelemetry.sdk.metrics.export import PeriodicExportingMetricReader
+from opentelemetry.sdk.metrics.view import View
 from opentelemetry.sdk._logs import LoggerProvider
 from opentelemetry.sdk._logs.export import BatchLogRecordProcessor
 from opentelemetry.sdk.resources import Resource
@@ -52,7 +53,30 @@ metric_reader = PeriodicExportingMetricReader(
         insecure=True,
     )
 )
-metrics.set_meter_provider(MeterProvider(resource=resource, metric_readers=[metric_reader]))
+
+# Create views to automatically add resource attributes as labels
+def create_resource_attribute_view(metric_name):
+    return View(
+        instrument_name=metric_name,
+        attribute_keys=frozenset([
+            "service_name",
+            "service_version", 
+            "service_namespace",
+            "deployment_environment"
+        ])
+    )
+
+# Define views for all custom metrics
+views = [
+    create_resource_attribute_view("flights_requests_total"),
+    create_resource_attribute_view("bookings_total"),
+]
+
+metrics.set_meter_provider(MeterProvider(
+    resource=resource, 
+    metric_readers=[metric_reader],
+    views=views
+))
 meter = metrics.get_meter(__name__)
 
 # Logging
@@ -68,8 +92,8 @@ logger_provider.add_log_record_processor(BatchLogRecordProcessor(otlp_log_export
 # Configure Pyroscope
 pyroscope_server_address = os.getenv("PYROSCOPE_SERVER_ADDRESS", "https://profiles-prod-008.grafana.net")
 pyroscope_application_name = os.getenv("PYROSCOPE_APPLICATION_NAME", "flights-service")
-pyroscope_basic_auth_user = os.getenv("PYROSCOPE_BASIC_AUTH_USER", "1093656")
-pyroscope_basic_auth_password = os.getenv("PYROSCOPE_BASIC_AUTH_PASSWORD", "glc_eyJvIjoiMTI2NzQ0MCIsIm4iOiJzdGFjay0xMDkzNjU2LWhwLXdyaXRlLXNjb2FkeS1wcm9maWxlcyIsImsiOiI3aFA0NkpWNnRiTzBINUEyaGw1cDVVRjEiLCJtIjp7InIiOiJwcm9kLXVzLXdlc3QtMCJ9fQ==")
+pyroscope_basic_auth_user = os.getenv("PYROSCOPE_BASIC_AUTH_USER")
+pyroscope_basic_auth_password = os.getenv("PYROSCOPE_BASIC_AUTH_PASSWORD")
 
 pyroscope.configure(
     application_name=pyroscope_application_name,
@@ -190,7 +214,13 @@ def get_flights(airline):
         simulate_processing(airline)
         
         span.set_attribute("airline", airline)
-        flights_counter.add(1, {"airline": airline})
+        flights_counter.add(1, {
+            "airline": airline,
+            "service_name": resource.attributes.get("service.name", ""),
+            "service_version": resource.attributes.get("service.version", ""),
+            "service_namespace": resource.attributes.get("service.namespace", ""),
+            "deployment_environment": resource.attributes.get("deployment.environment", "production")
+        })
         logger.info(f"Getting flights for airline: {airline}")
         
         status_code = request.args.get("raise")
@@ -245,7 +275,13 @@ def book_flight():
         
         span.set_attribute("passenger_name", passenger_name)
         span.set_attribute("flight_num", flight_num)
-        bookings_counter.add(1, {"flight_num": flight_num})
+        bookings_counter.add(1, {
+            "flight_num": flight_num,
+            "service_name": resource.attributes.get("service.name", ""),
+            "service_version": resource.attributes.get("service.version", ""),
+            "service_namespace": resource.attributes.get("service.namespace", ""),
+            "deployment_environment": resource.attributes.get("deployment.environment", "")
+        })
         logger.info(f"Booking flight {flight_num} for passenger: {passenger_name}")
         
         status_code = request.args.get("raise")

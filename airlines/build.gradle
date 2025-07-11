@@ -21,6 +21,11 @@ dependencies {
 	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.5.0'
 	// Pyroscope Java Agent
 	implementation 'io.pyroscope:agent:2.1.2'
+	// OpenTelemetry standalone SDK - using BOM for version consistency
+	implementation platform('io.opentelemetry:opentelemetry-bom:1.31.0')
+	implementation 'io.opentelemetry:opentelemetry-api'
+	implementation 'io.opentelemetry:opentelemetry-sdk'
+	implementation 'io.opentelemetry:opentelemetry-exporter-otlp'
 	// tag::tests[]
 	testImplementation('org.springframework.boot:spring-boot-starter-test')
 	// end::tests[]
